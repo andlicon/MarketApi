@@ -131,7 +131,7 @@ def remove_product(id):
 
 # put a new product
 @app.route('/products/<int:id>', methods=['PUT'])
-def update_product(id):
+def put_product(id):
     if not request.is_json:
         return jsonify({'msg': 'Body must be a JSON object'}), 400
 
@@ -147,6 +147,33 @@ def update_product(id):
 
     product.name = name
     product.price = price
+
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        print(e)
+        return jsonify({'msg': 'Some internal error'}), 500
+
+    return jsonify({'msg': 'Product updated'}), 200
+
+
+# patch a new product
+@app.route('/products/<int:id>', methods=['PATCH'])
+def patch_product(id):
+    if not request.is_json:
+        return jsonify({'msg': 'Body must be a JSON object'}), 400
+
+    product = Product.query.filter_by(id=id).one_or_none()
+    if product is None:
+        return jsonify({'msg': 'Product not found'}), 404
+
+    body = request.get_json()
+    name = body.get('name')
+    price = body.get('price')
+
+    product.name = name if name is not None else product.name
+    product.price = price if price is not None else product.price
 
     try:
         db.session.commit()
