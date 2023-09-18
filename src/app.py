@@ -8,8 +8,7 @@ from flask_swagger import swagger
 from flask_cors import CORS
 from utils import APIException, generate_sitemap
 from admin import setup_admin
-from models import db, User
-#from models import Person
+from models import db, User, Product, Order, OrderStatus
 
 app = Flask(__name__)
 app.url_map.strict_slashes = False
@@ -36,14 +35,42 @@ def handle_invalid_usage(error):
 def sitemap():
     return generate_sitemap(app)
 
-@app.route('/user', methods=['GET'])
-def handle_hello():
+# get All users
+@app.route('/users', methods=['GET'])
+def get_all_user():
 
-    response_body = {
-        "msg": "Hello, this is your GET /user response "
-    }
+    user_list = User.query.all()
+    serialized = list(map(lambda user: user.serialize(), user_list))
 
-    return jsonify(response_body), 200
+    return jsonify(serialized), 200
+
+# add a new user
+@app.route('/users', methods=['POST'])
+def add_user():
+    if not request.is_json:
+        return jsonify({'msg': 'Body must be a JSON object'}), 400
+
+    body = request.get_json()
+    name = body.get('name')
+    email = body.get('email')
+    if None in [name, email]:
+        return jsonify({'msg': 'Wrong properties'}), 400
+
+    any_user = User.query.filter_by(email=email).one_or_none()
+    if any_user is not None:
+        return jsonify({'msg': 'Email already chosen'}), 400
+
+    user = User(name=name, email=email)
+
+    try:
+        db.session.add(user)
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        print(e)
+        return jsonify({'msg': 'Some internal error'}), 500
+
+    return jsonify({'msg': 'ok'}), 200
 
 # this only runs if `$ python src/app.py` is executed
 if __name__ == '__main__':
