@@ -70,7 +70,45 @@ def add_user():
         print(e)
         return jsonify({'msg': 'Some internal error'}), 500
 
-    return jsonify({'msg': 'ok'}), 200
+    return jsonify({'msg': 'ok'}), 202
+
+
+# get All products
+@app.route('/products', methods=['GET'])
+def get_all_products():
+
+    product_list = Product.query.all()
+    serialized = list(map(lambda product: product.serialize(), product_list))
+
+    return jsonify(serialized), 200
+
+# add a new user
+@app.route('/products', methods=['POST'])
+def add_product():
+    if not request.is_json:
+        return jsonify({'msg': 'Body must be a JSON object'}), 400
+
+    body = request.get_json()
+    name = body.get('name')
+    price = body.get('price')
+    if None in [name, price]:
+        return jsonify({'msg': 'Wrong properties'}), 400
+
+    any_product = Product.query.filter_by(name=name).one_or_none()
+    if any_product is not None:
+        return jsonify({'msg': 'There is a product already.'}), 400
+
+    product = Product(name=name, price=price)
+
+    try:
+        db.session.add(product)
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        print(e)
+        return jsonify({'msg': 'Some internal error'}), 500
+
+    return jsonify({'msg': 'ok'}), 202
 
 # this only runs if `$ python src/app.py` is executed
 if __name__ == '__main__':
