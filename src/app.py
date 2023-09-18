@@ -70,7 +70,7 @@ def add_user():
         print(e)
         return jsonify({'msg': 'Some internal error'}), 500
 
-    return jsonify({'msg': 'ok'}), 202
+    return jsonify({'msg': 'User added'}), 202
 
 
 # get All products
@@ -82,7 +82,7 @@ def get_all_products():
 
     return jsonify(serialized), 200
 
-# add a new user
+# add a new product
 @app.route('/products', methods=['POST'])
 def add_product():
     if not request.is_json:
@@ -108,7 +108,26 @@ def add_product():
         print(e)
         return jsonify({'msg': 'Some internal error'}), 500
 
-    return jsonify({'msg': 'ok'}), 202
+    return jsonify({'msg': 'Product added'}), 202
+
+
+# add a new product
+@app.route('/products/<int:id>', methods=['DELETE'])
+def remove_product(id):
+    product = Product.query.filter_by(id=id).one_or_none()
+    if product is None:
+        return jsonify({'msg': 'Product not found'}), 404
+
+    try:
+        db.session.delete(product)
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        print(e)
+        return jsonify({'msg': 'Some internal error'}), 500
+
+    return jsonify({'msg': 'Product deleted'}), 200
+
 
 # this only runs if `$ python src/app.py` is executed
 if __name__ == '__main__':

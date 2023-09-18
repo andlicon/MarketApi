@@ -4,7 +4,10 @@ import enum
 
 db = SQLAlchemy()
 
+
 class User(db.Model):
+    __tablename__ = "user"
+
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(80), unique=False, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
@@ -27,6 +30,8 @@ class User(db.Model):
 
 
 class Product(db.Model):
+    __tablename__ = "product"
+
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(80), unique=True, nullable=False)
     price = db.Column(db.Float, unique=False, nullable=False)
@@ -51,12 +56,14 @@ class Product(db.Model):
 class OrderStatus(enum.Enum):
     ORDERED = 'ordered'
     SALE = 'sale'
-
+    
 
 class Order(db.Model):
+    __tablename__ = "order"
+
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    product_id = db.Column(db.Integer, db.ForeignKey('product.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    product_id = db.Column(db.Integer, db.ForeignKey('product.id'))
     amount = db.Column(db.Integer, nullable=False)
     status = db.Column(db.Enum(OrderStatus), nullable=False, default=OrderStatus.ORDERED)
     created_at = db.Column(db.DateTime , default=datetime.now)
