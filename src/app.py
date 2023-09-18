@@ -185,6 +185,19 @@ def patch_product(id):
     return jsonify({'msg': 'Product updated'}), 200
 
 
+# all product user sale
+@app.route('/sales/user/<int:id>', methods=['GET'])
+def user_product_sale(id):
+    user = User.query.filter_by(id=id).one_or_none()
+    if user is None:
+        return jsonify({'msg': 'User not found'}), 404
+
+    product_sales = Product.query.filter_by(user_id=user.id, status=OrderStatus.SALE)
+    serialized = list(map(lambda product: product.serialize(), product_sales))
+
+    return jsonify(serialized), 200
+
+
 # this only runs if `$ python src/app.py` is executed
 if __name__ == '__main__':
     PORT = int(os.environ.get('PORT', 3000))

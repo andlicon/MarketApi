@@ -6,15 +6,13 @@ db = SQLAlchemy()
 
 
 class User(db.Model):
-    __tablename__ = "user"
-
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(80), unique=False, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     created_at = db.Column(db.DateTime , default=datetime.now)
     updated_at = db.Column(db.DateTime , default=datetime.now, onupdate=datetime.now)
     # relationship
-    orders = db.relationship('Order', backref='user')
+    orders_user = db.relationship('Order', backref='user')
 
     def __repr__(self):
         return f'<User {self.username}>'
@@ -30,15 +28,13 @@ class User(db.Model):
 
 
 class Product(db.Model):
-    __tablename__ = "product"
-
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(80), unique=True, nullable=False)
     price = db.Column(db.Float, unique=False, nullable=False)
     created_at = db.Column(db.DateTime , default=datetime.now)
     updated_at = db.Column(db.DateTime , default=datetime.now, onupdate=datetime.now)
     # relationship
-    orders = db.relationship('Order', backref='product')
+    product_order = db.relationship('ProductOrder', backref='product')
 
     def __repr__(self):
         return f'<Product {self.id}>'
@@ -52,6 +48,21 @@ class Product(db.Model):
             "updated_at": self.updated_at,
         }
 
+class ProductOrder(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    product_id = db.Column(db.Integer, db.ForeignKey('product.id'))
+    order_id = db.Column(db.Integer, db.ForeignKey('order.id'))
+
+    def __repr__(self):
+        return f'<ProductList {self.id}>'
+
+    def serialize(self):
+        return {
+            "id": self.id,
+            "product_id": self.product_id,
+            "order_id": self.order_id,
+        }
+
 
 class OrderStatus(enum.Enum):
     ORDERED = 'ordered'
@@ -59,15 +70,14 @@ class OrderStatus(enum.Enum):
     
 
 class Order(db.Model):
-    __tablename__ = "order"
-
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    product_id = db.Column(db.Integer, db.ForeignKey('product.id'))
     amount = db.Column(db.Integer, nullable=False)
     status = db.Column(db.Enum(OrderStatus), nullable=False, default=OrderStatus.ORDERED)
     created_at = db.Column(db.DateTime , default=datetime.now)
     updated_at = db.Column(db.DateTime , default=datetime.now, onupdate=datetime.now)
+    # relationship
+    product_order = db.relationship('ProductOrder', backref='order')
 
     def __repr__(self):
         return f'<Order {self.id}>'
@@ -76,7 +86,7 @@ class Order(db.Model):
         return {
             "id": self.id,
             "user_id": self.user_id,
-            "product_id": self.product_id,
+            "product_order_id": self.product_order_id,
             "amount": self.amount,
             "status": self.status.value,
             "created_at": self.created_at,
